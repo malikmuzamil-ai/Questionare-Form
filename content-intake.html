@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 2 · Content Intake</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rethink+Sans:wght@500;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --red:#e90d41; --red-deep:#c70a38; --red-soft:#fce8ed; --red-whisper:#fdf2f5;
+    --green:#2f7a4a; --green-soft:#e9f2ec;
+    --yellow:#f5c518; --yellow-soft:#fdf3cf; --yellow-ink:#7a6c2c;
+    --cream:#faf8f4; --dark:#0f0f10; --ink:#1a1a1a; --ink2:#6b6b6b;
+    --divider:#e8e2d8; --card:#ffffff;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:var(--cream);color:var(--ink);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;padding-top:46px;}
+
+  .minibar{position:fixed;top:0;left:0;right:0;height:46px;background:var(--dark);z-index:50;display:flex;align-items:center;justify-content:space-between;padding:0 20px;}
+  .minibar .lbl{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:rgba(250,248,244,.65);}
+  .minibar .track{flex:1;max-width:300px;margin:0 16px;height:4px;background:rgba(255,255,255,.14);border-radius:3px;overflow:hidden;}
+  .minibar .fill{height:100%;width:0%;background:var(--red);transition:width .35s;}
+  .minibar .pct{font-family:'JetBrains Mono',monospace;font-size:11px;color:#fff;font-weight:600;white-space:nowrap;}
+
+  .shell{max-width:920px;margin:0 auto;padding:34px 24px 130px;}
+  .brandmark{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+  .brandmark .dot{width:9px;height:9px;border-radius:50%;background:var(--red);}
+  .brandmark span{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink2);}
+  h1{font-family:'Rethink Sans',sans-serif;font-weight:800;font-size:clamp(26px,3.6vw,35px);line-height:1.13;margin:10px 0 10px;color:var(--dark);max-width:26ch;}
+  p.lede{font-size:15px;line-height:1.62;color:var(--ink2);max-width:64ch;margin:0 0 22px;}
+  p.lede b{color:var(--ink);}
+
+  .outcome{background:var(--dark);color:var(--cream);border-radius:20px;padding:26px 28px;margin-bottom:14px;}
+  .outcome .k{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--red);margin-bottom:12px;}
+  .outcome h2{font-family:'Rethink Sans',sans-serif;font-weight:800;font-size:19px;margin:0 0 16px;}
+  .three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px;}
+  .three .o{background:#191919;border:1px solid rgba(255,255,255,.09);border-radius:13px;padding:15px 16px;}
+  .three .o .n{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--red);margin-bottom:6px;}
+  .three .o .t{font-family:'Rethink Sans',sans-serif;font-weight:800;font-size:14.5px;color:#fff;margin-bottom:5px;line-height:1.3;}
+  .three .o .d{font-size:11.5px;line-height:1.5;color:rgba(250,248,244,.62);}
+  .outcome p.time{font-size:12.5px;color:rgba(250,248,244,.6);margin:16px 0 0;line-height:1.5;}
+
+  .steps{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:38px;}
+  .st{display:flex;align-items:center;gap:7px;background:var(--card);border:1px solid var(--divider);border-radius:999px;padding:6px 13px;font-size:11.5px;color:var(--ink2);}
+  .st b{color:var(--ink);}
+  .st .d{width:6px;height:6px;border-radius:50%;background:var(--divider);}
+  .st.now{background:var(--dark);border-color:var(--dark);color:rgba(250,248,244,.7);}
+  .st.now b{color:#fff;} .st.now .d{background:var(--red);}
+  .st.done .d{background:var(--green);}
+
+  .section-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:46px 0 6px;}
+  .section-head .idx{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--red);}
+  .section-head h2{font-family:'Rethink Sans',sans-serif;font-weight:800;font-size:21px;color:var(--dark);margin:0;}
+  .section-head .cnt{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;background:var(--divider);color:var(--ink2);padding:3px 9px;border-radius:20px;}
+  p.section-sub{font-size:13.5px;color:var(--ink2);line-height:1.6;max-width:62ch;margin:0 0 18px;}
+
+  .field-card{background:var(--card);border:1px solid var(--divider);border-radius:16px;padding:20px 22px;margin-bottom:12px;}
+  .field-card label{display:block;font-family:'Rethink Sans',sans-serif;font-weight:700;font-size:15.5px;color:var(--dark);margin-bottom:4px;line-height:1.35;}
+  .field-card .hint{font-size:12.5px;color:var(--ink2);margin-bottom:11px;line-height:1.55;}
+  .field-card input[type="text"], .field-card textarea{width:100%;border:none;border-bottom:1.5px dashed var(--divider);background:transparent;font-family:'Inter',sans-serif;font-size:14.5px;color:var(--ink);padding:7px 2px;resize:vertical;outline:none;line-height:1.55;}
+  .field-card input:focus, .field-card textarea:focus{border-bottom-color:var(--red);}
+  .field-card input::placeholder, .field-card textarea::placeholder{color:#b7b2a6;}
+  .field-card.attach{background:var(--red-whisper);border-color:var(--red-soft);}
+  .field-card.attach textarea{border-bottom-style:solid;min-height:110px;}
+
+  .exbtn{background:none;border:1px solid var(--divider);border-radius:999px;font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink2);padding:4px 11px;cursor:pointer;margin-bottom:10px;}
+  .exbtn:hover{border-color:var(--ink2);color:var(--ink);}
+  .ex{display:none;background:var(--cream);border-left:2px solid var(--yellow);border-radius:0 10px 10px 0;padding:12px 15px;margin-bottom:12px;font-size:12.5px;line-height:1.6;color:var(--ink2);}
+  .ex.on{display:block;}
+  .ex b{color:var(--ink);} .ex em{color:var(--red-deep);font-style:normal;font-weight:600;}
+
+  .pill-group{display:flex;flex-wrap:wrap;gap:8px;}
+  .pill{border:1.5px solid var(--divider);background:var(--card);color:var(--ink);font-size:13.5px;font-weight:500;padding:8px 15px;border-radius:999px;cursor:pointer;user-select:none;}
+  .pill:hover{border-color:var(--ink2);}
+  .pill.active{background:var(--red);border-color:var(--red);color:#fff;}
+
+  .carried{background:#f4f1eb;background-image:radial-gradient(var(--divider) 1px,transparent 1px);background-size:16px 16px;border:1px solid var(--divider);border-radius:20px;padding:22px 22px 18px;margin-bottom:12px;}
+  .carried .ttl{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink2);margin-bottom:14px;}
+  .cgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .ccell{background:#fff;border:1.5px dashed var(--divider);border-radius:13px;padding:13px 15px;}
+  .ccell .k{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2);margin-bottom:5px;}
+  .ccell .v{font-size:13.5px;color:var(--ink);line-height:1.45;font-weight:500;}
+  .ccell.goal{grid-column:1/3;border-style:solid;border-color:var(--yellow);background:var(--yellow-soft);}
+  .ccell.goal .v{font-family:'Rethink Sans',sans-serif;font-weight:800;font-size:16px;}
+
+  .arm-build{background:var(--card);border:1.5px solid var(--divider);border-radius:20px;margin-bottom:13px;overflow:hidden;}
+  .arm-head{display:flex;align-items:center;gap:11px;padding:15px 22px;background:#f8f6f1;border-bottom:1px solid var(--divider);}
+  .arm-head .n{width:26px;height:26px;border-radius:50%;background:var(--dark);color:#fff;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;flex:0 0 auto;}
+  .arm-head .t{font-family:'Rethink Sans',sans-serif;font-weight:800;font-size:14.5px;color:var(--dark);}
+  .arm-body{padding:4px 22px 18px;}
+  .step{border-left:2px solid var(--divider);padding:15px 0 3px 18px;margin-left:6px;position:relative;}
+  .step:last-child{border-left-color:transparent;}
+  .step::before{content:'';position:absolute;left:-6px;top:19px;width:10px;height:10px;border-radius:50%;background:var(--divider);}
+  .step.r::before{background:var(--red);}
+  .step.g::before{background:var(--green);}
+  .step.b::before{background:var(--red-deep);}
+  .step .kick{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:5px;}
+  .step.r .kick{color:var(--red);} .step.g .kick{color:var(--green);} .step.b .kick{color:var(--red-deep);}
+  .step label{display:block;font-family:'Rethink Sans',sans-serif;font-weight:700;font-size:14.5px;color:var(--dark);margin-bottom:4px;line-height:1.35;}
+  .step .hint{font-size:12px;color:var(--ink2);margin-bottom:9px;line-height:1.55;}
+  .step input[type="text"]{width:100%;border:none;border-bottom:1.5px dashed var(--divider);background:transparent;font-family:'Inter',sans-serif;font-size:14px;color:var(--ink);padding:6px 2px;outline:none;}
+  .step input:focus{border-bottom-color:var(--red);}
+  .step input::placeholder{color:#b7b2a6;}
+
+  .note-box{display:flex;gap:12px;align-items:flex-start;background:var(--red-whisper);border:1px solid var(--red-soft);border-radius:16px;padding:18px 20px;margin:28px 0 8px;font-size:13.5px;line-height:1.62;color:var(--ink);}
+  .note-box b{color:var(--red-deep);}
+  .yellow-box{background:var(--yellow-soft);border:1.5px solid var(--yellow);border-radius:16px;padding:18px 20px;margin:14px 0 8px;font-size:13.5px;line-height:1.62;color:#5f552b;}
+  .yellow-box b{color:#3d3719;}
+
+  @media (max-width:700px){
+    .cgrid,.three{grid-template-columns:1fr;}
+    .ccell.goal{grid-column:1/2;}
+  }
+</style>
+</head>
+<body>
+
+<div class="minibar">
+  <span class="lbl">Day 2 · Content Intake</span>
+  <div class="track"><div class="fill" id="miniFill"></div></div>
+  <span class="pct" id="miniPct">0 of 12</span>
+</div>
+
+<div class="shell">
+
+  <div class="brandmark"><span class="dot"></span><span>Day 2 · Before The Session</span></div>
+  <h1>Twelve questions. Four short sections. Nothing you have answered before.</h1>
+  <p class="lede">Your goal and your offer are already saved from last week, so this only asks what nothing else knows. <b>Write these yourself.</b> If you paste in answers from Claude you will get a plan built on Claude's thinking instead of yours, and you will be able to tell.</p>
+
+  <div class="outcome">
+    <div class="k">What you walk out with today</div>
+    <h2>Three things, finished, in your hands.</h2>
+    <div class="three">
+      <div class="o"><div class="n">01</div><div class="t">Your content pillars</div><div class="d">What you talk about for the next 30 days, and how much of each.</div></div>
+      <div class="o"><div class="n">02</div><div class="t">Your lead magnets</div><div class="d">Three free things, cut out of what you already sell. Nothing new to build.</div></div>
+      <div class="o"><div class="n">03</div><div class="t">Your 30-day plan</div><div class="d">Four weeks, one goal each, with the theme and format for every post.</div></div>
+    </div>
+    <p class="time">This form takes about fifteen minutes if you write your own answers. That is the whole point of it.</p>
+  </div>
+
+  <div class="steps">
+    <div class="st done"><span class="d"></span><b>Last week</b> · your offer</div>
+    <div class="st now"><span class="d"></span><b>Now</b> · this form, then your triangle</div>
+    <div class="st"><span class="d"></span><b>Then</b> · your strategy, built for you</div>
+    <div class="st"><span class="d"></span><b>After</b> · save it to your second brain</div>
+  </div>
+
+  <!-- 01 -->
+  <div class="section-head"><span class="idx">01</span><h2>What You Already Have</h2><span class="cnt">3 questions</span></div>
+  <p class="section-sub">Start by attaching, not typing. You built real documents last week and this reads from them instead of asking you again.</p>
+
+  <div class="field-card attach">
+    <label>Attach or paste everything you have built so far</label>
+    <div class="hint">Your offer document, your ICP, your brand and voice files, an about page, testimonials, an old proposal. Messy is fine. Long is fine.</div>
+    <textarea data-req placeholder="Drop it all in here."></textarea>
+  </div>
+
+  <div class="field-card">
+    <label>Who do you help, said the way you would say it to someone at a dinner table</label>
+    <div class="hint">This drives the research step, so be specific. "Coaches" is too wide to build on.</div>
+    <button class="exbtn" data-ex="e1">See an example</button>
+    <div class="ex" id="e1"><b>Too wide:</b> I help coaches grow.<br><b>Works:</b> <em>I help solo practitioners who get great results but only have 800 followers turn the results they already have into enquiries.</em></div>
+    <input type="text" data-req placeholder="Who, at what stage, with what problem">
+  </div>
+
+  <div class="field-card">
+    <label>Every real number you have</label>
+    <div class="hint">Client results, how long clients stay, years doing this, anything countable. If the honest answer is "none yet", write that and the plan changes to build proof over the 30 days instead of claiming it.</div>
+    <textarea data-req rows="3" placeholder="e.g. 14 clients over 3 years. Best result 22 enquiries in 6 weeks. Longest client 19 months."></textarea>
+  </div>
+
+  <!-- 02 -->
+  <div class="section-head"><span class="idx">02</span><h2>Your Triangle</h2><span class="cnt">9 short answers</span></div>
+  <p class="section-sub">The middle is already filled from last week. You add the outside: three problems your audience has, what fixes each one, and what you hand them. Three quick answers per problem.</p>
+
+  <div class="carried">
+    <div class="ttl">Saved from last week</div>
+    <div class="cgrid">
+      <div class="ccell goal"><div class="k">The middle of your triangle</div><div class="v">5 new clients in 30 days</div></div>
+      <div class="ccell"><div class="k">Your offer</div><div class="v">Done-with-you inbound system, 90 days</div></div>
+      <div class="ccell"><div class="k">What was stopping you</div><div class="v">Nobody sees me · no replies · calls go quiet</div></div>
+    </div>
+  </div>
+
+  <div class="yellow-box">
+    <b>One rule for what you give away.</b> Do not invent anything. Look at what is already inside your offer, your audit, your call questions, one part of your method, and cut a piece off it. If you have to build it this month, pick something else.
+  </div>
+
+  <div class="arm-build">
+    <div class="arm-head"><span class="n">1</span><span class="t">They have the problem but they have named it wrong</span></div>
+    <div class="arm-body">
+      <div class="step r">
+        <div class="kick">What stops them</div>
+        <label>What do they say the problem is</label>
+        <div class="hint">Their words, out loud, even though they are wrong about it.</div>
+        <button class="exbtn" data-ex="e2">See an example</button>
+        <div class="ex" id="e2">They say <em>"I post consistently and nothing happens."</em> They think it is reach. It is what they post about. Write the quote, not the diagnosis.</div>
+        <input type="text" data-req placeholder='"I post and nothing happens"'>
+      </div>
+      <div class="step g">
+        <div class="kick">What fixes it</div>
+        <label>What do they start doing differently</label>
+        <div class="hint">Three or four words.</div>
+        <button class="exbtn" data-ex="e3">See an example</button>
+        <div class="ex" id="e3"><em>They name it right.</em> Or: they measure the right thing. Something they do, not something they understand.</div>
+        <input type="text" data-req placeholder="e.g. They name it right">
+      </div>
+      <div class="step b">
+        <div class="kick">What you hand them</div>
+        <label>Which piece of your offer do you cut it from, and what do you call it</label>
+        <div class="hint">Both in one line.</div>
+        <button class="exbtn" data-ex="e4">See how the cut works</button>
+        <div class="ex" id="e4">Your new client audit runs 30 checks. Cut it to <b>six they can run alone</b> and call it <em>The 60-Second Post Audit</em>. It tells them what is wrong. It does not tell them what to write instead, which is what they pay you for.</div>
+        <input type="text" data-req placeholder="e.g. From my 30-check audit → The 60-Second Post Audit">
+      </div>
+    </div>
+  </div>
+
+  <div class="arm-build">
+    <div class="arm-head"><span class="n">2</span><span class="t">They believe the problem but not that your answer is different</span></div>
+    <div class="arm-body">
+      <div class="step r">
+        <div class="kick">What stops them</div>
+        <label>What makes them think they have heard this before</label>
+        <button class="exbtn" data-ex="e5">See an example</button>
+        <div class="ex" id="e5">They say <em>"everyone says the same thing"</em>, or "I tried this and it did not stick", or "that works if you already have an audience".</div>
+        <input type="text" data-req placeholder='"Everyone says the same thing"'>
+      </div>
+      <div class="step g">
+        <div class="kick">What fixes it</div>
+        <label>What has to happen before they believe you</label>
+        <button class="exbtn" data-ex="e6">See an example</button>
+        <div class="ex" id="e6"><em>They see it work.</em> On somebody who looked like them at the start. Claims do not do this. A named client does.</div>
+        <input type="text" data-req placeholder="e.g. They see it work on someone like them">
+      </div>
+      <div class="step b">
+        <div class="kick">What you hand them</div>
+        <label>Which piece of your offer do you cut it from, and what do you call it</label>
+        <button class="exbtn" data-ex="e7">See how the cut works</button>
+        <div class="ex" id="e7">Open <b>one</b> part of your method on <b>one</b> real client. What they tried before, what you changed, the number it moved. Call it <em>One Client Breakdown</em>. Not the whole method thinly, one part fully.</div>
+        <input type="text" data-req placeholder="e.g. From part 3 of my method → One Client Breakdown">
+      </div>
+    </div>
+  </div>
+
+  <div class="arm-build">
+    <div class="arm-head"><span class="n">3</span><span class="t">They believe you but not that it applies to them</span></div>
+    <div class="arm-body">
+      <div class="step r">
+        <div class="kick">What stops them</div>
+        <label>What makes them think they are the exception</label>
+        <button class="exbtn" data-ex="e8">See an example</button>
+        <div class="ex" id="e8">Their size, their niche, their time. They say <em>"not sure this works for someone at my size"</em> or "my industry is different".</div>
+        <input type="text" data-req placeholder='"Not sure this works for someone like me"'>
+      </div>
+      <div class="step g">
+        <div class="kick">What fixes it</div>
+        <label>What has to happen before they decide</label>
+        <button class="exbtn" data-ex="e9">See an example</button>
+        <div class="ex" id="e9"><em>They see themselves in it.</em> The last gap is almost never price. It is whether they can picture the result happening to them.</div>
+        <input type="text" data-req placeholder="e.g. They see themselves in the result">
+      </div>
+      <div class="step b">
+        <div class="kick">What you hand them</div>
+        <label>Which piece of your offer do you cut it from, and what do you call it</label>
+        <button class="exbtn" data-ex="e10">See how the cut works</button>
+        <div class="ex" id="e10">Your sales call already asks questions to decide if someone is right for you. Publish the questions as <em>The Fit Check</em>. Wrong-fit people leave for free. Right-fit people arrive already convinced.</div>
+        <input type="text" data-req placeholder="e.g. From my sales call questions → The Fit Check">
+      </div>
+    </div>
+  </div>
+
+  <div class="note-box"><span>→</span><div><b>All three get built. Only one gets promoted.</b> They are all free to make, because they already exist. But you push one of them publicly this month and keep the other two for conversations. Push all three and people learn that you have three answers and no clear position.</div></div>
+
+  <!-- 03 -->
+  <div class="section-head"><span class="idx">03</span><h2>Where This Runs</h2><span class="cnt">3 questions</span></div>
+  <p class="section-sub">One answer decides which plan gets built for you. Instagram, LinkedIn and Facebook work in genuinely different ways, so the plans are not the same document with the name swapped.</p>
+
+  <div class="field-card">
+    <label>Where does your audience already spend time</label>
+    <div class="hint">Not where you like posting. Where they are.</div>
+    <div class="pill-group" data-pillgroup="platform">
+      <div class="pill">LinkedIn</div><div class="pill">Instagram</div><div class="pill">Facebook</div><div class="pill">A mix</div>
+    </div>
+  </div>
+
+  <div class="field-card" id="mixcard" style="display:none;background:var(--yellow-soft);border-color:var(--yellow);">
+    <label>Then which one gets most of your time</label>
+    <div class="hint">A mix becomes one real plan plus a line telling you how to reuse each post elsewhere. Never three plans.</div>
+    <div class="pill-group" data-pillgroup="primary">
+      <div class="pill">LinkedIn</div><div class="pill">Instagram</div><div class="pill">Facebook</div>
+    </div>
+  </div>
+
+  <div class="field-card">
+    <label>What are you selling right now</label>
+    <div class="pill-group" data-pillgroup="model">
+      <div class="pill">A service, ongoing clients</div>
+      <div class="pill">Coaching or a workshop, filling seats</div>
+      <div class="pill">A course or digital product</div>
+      <div class="pill">Software</div>
+    </div>
+  </div>
+
+  <div class="field-card">
+    <label>Is there a real date driving this</label>
+    <div class="hint">A workshop, a launch, a cohort start. If there is one, both giveaway pushes get dated backwards from it. Leave it blank if there is not.</div>
+    <input type="text" placeholder="e.g. Cohort opens on the 14th">
+  </div>
+
+  <!-- 04 -->
+  <div class="section-head"><span class="idx">04</span><h2>You</h2><span class="cnt">3 questions</span></div>
+  <p class="section-sub">The last three carry the most weight. Your one big idea gets built out of them, and it is the part of your plan nobody else could publish.</p>
+
+  <div class="field-card">
+    <label>How many hours a week can you give this, honestly</label>
+    <div class="hint">Including the commenting and the replies, not just the writing. Round down. The plan gets built to fit this number, so a high guess hurts you.</div>
+    <div class="pill-group" data-pillgroup="time">
+      <div class="pill">Under 1</div><div class="pill">1 to 3</div><div class="pill">3 to 5</div><div class="pill">5 or more</div>
+    </div>
+  </div>
+
+  <div class="field-card">
+    <label>What do most people in your industry get wrong</label>
+    <div class="hint">The thing you would argue about. Not the safe version. This becomes the one idea you get known for, so take a minute on it.</div>
+    <button class="exbtn" data-ex="e11">See an example</button>
+    <div class="ex" id="e11"><em>Posting more is not the fix. Every founder I have worked with under 20k a month was already posting enough. They were posting about the wrong problem, and posting more just made it louder.</em></div>
+    <textarea data-req rows="3" placeholder="What you would push back on if a peer said the opposite"></textarea>
+  </div>
+
+  <div class="field-card">
+    <label>Walk through what you actually do when you fix this for someone</label>
+    <div class="hint">Step by step, in order, the way you would explain it to a friend. Include the boring first step, because that is usually the one nobody else talks about.</div>
+    <textarea data-req rows="5" placeholder="First I... then... the part people skip is..."></textarea>
+  </div>
+
+  <div class="note-box">
+    <span>→</span>
+    <div><b>What happens next.</b> Research runs on your niche first: the words your buyers use, and what every competitor in your space is already saying so your plan can avoid it. Then your answers and your triangle build the three things listed at the top of this page. Last step, you drop the finished document into your second brain, and every piece of content you ask for after today gets written with all of it in front of you.</div>
+  </div>
+
+</div>
+
+<script>
+  document.querySelectorAll('.exbtn').forEach(b=>{
+    const orig=b.textContent;
+    b.addEventListener('click',()=>{
+      const t=document.getElementById(b.getAttribute('data-ex'));
+      if(!t)return;
+      t.classList.toggle('on');
+      b.textContent=t.classList.contains('on')?'Hide':orig;
+    });
+  });
+  const groups=['platform','model','time'];
+  const chosen={};
+  const reqs=document.querySelectorAll('[data-req]');
+  const total=groups.length+reqs.length;
+  function update(){
+    let n=Object.keys(chosen).length;
+    reqs.forEach(r=>{if(r.value.trim().length>2)n++;});
+    document.getElementById('miniFill').style.width=Math.round((n/total)*100)+'%';
+    document.getElementById('miniPct').innerText=n+' of '+total;
+  }
+  document.querySelectorAll('.pill-group').forEach(g=>{
+    const key=g.getAttribute('data-pillgroup');
+    g.addEventListener('click',e=>{
+      const p=e.target.closest('.pill'); if(!p)return;
+      g.querySelectorAll('.pill').forEach(x=>x.classList.remove('active'));
+      p.classList.add('active');
+      if(groups.includes(key))chosen[key]=p.innerText;
+      if(key==='platform'){document.getElementById('mixcard').style.display=p.innerText.toLowerCase().includes('mix')?'block':'none';}
+      update();
+    });
+  });
+  reqs.forEach(r=>r.addEventListener('input',update));
+  update();
+</script>
+
+</body>
+</html>
